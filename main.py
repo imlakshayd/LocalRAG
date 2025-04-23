@@ -39,8 +39,25 @@ for paths, folders, files in os.walk(directory):
                     json.dump(dictionary, outfile)
                     outfile.write("\n")
 
-
-json_data = requests.get("data.json").json()
 splitter = RecursiveJsonSplitter(max_chunk_size=300)
-json_chunks = splitter.split_json(json_data = json_data )
+
+data_file = "data.json"
+with open(data_file, "r") as file:
+    json_data = json.load(file)
+
+json_chunks = splitter.split_json(json_data=json_data)
+
+for chunk in json_chunks[:3]:
+    print(chunk)
+
+
+
+# for data in json_chunks:
+#     with open("data.json", "r") as file:
+#         json_data = json.load(file)
+#
+#     json_chunks = splitter.split_json(json_data=json_data)
+
+
+
 
