@@ -4,6 +4,8 @@ import magic # Able to get the type of file
 import json
 import requests
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 # Assign directory
 directory = r"E:\Winter Sem\LocalRAG\Data"
@@ -105,6 +107,46 @@ print(f"Created {len(chunks)} chunks.")
 
 with open("chunks.json", "w") as outfile:
         json.dump(all_chunks, outfile, indent=2)
+
+with open("chunks.json", "r") as f:
+    chunks = json.load(f)
+
+print(f"Loaded {len(chunks)} chunks.")
+
+model_name = "BAAI/bge-small-en-v1.5"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
+
+texts = [chunk["chunk"] for chunk in chunks]
+
+embeddings = []
+
+for text in texts:
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        embedding = outputs.last_hidden_state[:, 0]
+        embeddings.append(embedding.squeeze(0).tolist())
+
+print(f"Created {len(embeddings)} embeddings.")
+
+data_to_save = []
+
+for chunk, embedding in zip(chunks, embeddings):
+    entry = {
+        "source": chunk["source"],
+        "chunk": chunk["chunk"],
+        "embedding": embedding
+    }
+    data_to_save.append(entry)
+
+with open("embedded_chunk.json", "w") as outfile:
+    json.dump(data_to_save, outfile, indent=2)
+
+print(f"Saved embeddings to embedded_chunks.json.")
+
+
+
 
 # json_chunks = splitter.split_json(json_data=json_data)
 #
