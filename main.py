@@ -6,6 +6,8 @@ import requests
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from transformers import AutoTokenizer, AutoModel
 import torch
+import chromadb
+from chromadb.config import Settings
 
 # Assign directory
 directory = r"E:\Winter Sem\LocalRAG\Data"
@@ -145,8 +147,31 @@ with open("embedded_chunk.json", "w") as outfile:
 
 print(f"Saved embeddings to embedded_chunks.json.")
 
+client = chromadb.PersistentClient(path="E:/Winter Sem/LocalRAG")
+collection = client.get_or_create_collection(name="info")
+
+all_texts = []
+all_embeddings = []
+all_metadatas = []
+all_ids = []
+counter = 0
+
+for chunk, embedding in zip(chunks, embeddings):
+    all_texts.append(chunk["chunk"])
+    all_embeddings.append(embedding)
+    all_metadatas.append({"source": chunk["source"]})
+    all_ids.append(str(counter))
+    counter += 1
+
+collection.add(
+    documents=all_texts,
+    embeddings=all_embeddings,
+    metadatas=all_metadatas,
+    ids=all_ids
+)
 
 
+print("All chunks added to Chroma!")
 
 # json_chunks = splitter.split_json(json_data=json_data)
 #
