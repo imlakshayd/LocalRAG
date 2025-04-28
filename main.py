@@ -170,8 +170,36 @@ collection.add(
     ids=all_ids
 )
 
-
 print("All chunks added to Chroma!")
+
+def embed_query(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        embedding = outputs.last_hidden_state[:, 0]
+        return embedding.squeeze(0).tolist()
+
+
+while True:
+    question = input("\nAsk a question (or type 'exit' to quit): ")
+
+    if question.lower() == "exit":
+        break
+
+    # Embed the question
+    query_embedding = embed_query(question)
+
+    # Search Chroma
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=3
+    )
+
+    # Show Results
+    for doc, metadata in zip(results['documents'][0], results['metadatas'][0]):
+        print("\n---")
+        print(f"Source: {metadata['source']}")
+        print(f"Content:\n{doc}")
 
 # json_chunks = splitter.split_json(json_data=json_data)
 #
