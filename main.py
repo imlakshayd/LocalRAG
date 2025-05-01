@@ -64,9 +64,9 @@ for paths, folders, files in os.walk(directory):
                 new_data.append(dictionary)
 
 print(f"Processed {len(new_data)} new entries.")
-combined_data = existing_data + new_data
 
 if new_data:
+    combined_data = existing_data + new_data
     print(f"Saving total {len(combined_data)} entries to {data_file}")
     with open(data_file, "w") as outfile:
         json.dump(combined_data, outfile, indent=2)
@@ -114,11 +114,26 @@ for entry in json_data:
 
 print(f"Created {len(chunks)} chunks.")
 
-with open("chunks.json", "w") as outfile:
-    json.dump(all_chunks, outfile, indent=2)
 
-with open("chunks.json", "r") as f:
-    chunks = json.load(f)
+existing_chunks = []
+if os.path.exists("chunks.json"):
+    with open("chunks.json", "r") as f:
+        existing_chunks = json.load(f)
+
+if len(all_chunks) != len(existing_chunks):
+    with open("chunks.json", "w") as outfile:
+        json.dump(all_chunks, outfile, indent=2)
+    print(f"Updated chunks.json with {len(all_chunks)} chunks.")
+    chunks = all_chunks  # use the newly created chunks
+else:
+    print("chunks.json unchanged.")
+    chunks = existing_chunks  # reuse the previously loaded chunks
+
+# with open("chunks.json", "w") as outfile:
+#     json.dump(all_chunks, outfile, indent=2)
+#
+# with open("chunks.json", "r") as f:
+#     chunks = json.load(f)
 
 print(f"Loaded {len(chunks)} chunks.")
 
@@ -149,8 +164,22 @@ for chunk, embedding in zip(chunks, embeddings):
     }
     data_to_save.append(entry)
 
-with open("embedded_chunk.json", "w") as outfile:
-    json.dump(data_to_save, outfile, indent=2)
+
+existing_embedded = []
+if os.path.exists("embedded_chunk.json"):
+    with open("embedded_chunk.json", "r") as f:
+        existing_embedded = json.load(f)
+
+# Compare counts first (basic check)
+if len(data_to_save) != len(existing_embedded):
+    with open("embedded_chunk.json", "w") as outfile:
+        json.dump(data_to_save, outfile, indent=2)
+    print(f"Updated embedded_chunk.json with {len(data_to_save)} entries.")
+else:
+    print("embedded_chunk.json unchanged.")
+
+# with open("embedded_chunk.json", "w") as outfile:
+#     json.dump(data_to_save, outfile, indent=2)
 
 print(f"Saved embeddings to embedded_chunks.json.")
 
